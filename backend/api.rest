@@ -1,0 +1,10 @@
+PUT  http://127.0.0.1:8000/api/usuario-actual/editar/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4NTAxNDQ2LCJpYXQiOjE3NTg0OTc4NDYsImp0aSI6IjUwMzZkMGUzNTY5MjRhZGM4MmEwNzZhYTQ2ZjVmNGIwIiwidXNlcl9pZCI6IjEifQ.IsFKE4tfUh-S6NEy7kPS5r1ah7dKDnZ6jmpn-bGpVEc 
+content-Type:application/json
+
+{
+  "first_name": "Sebas",
+  "last_name": "Delgadillo",
+  "email": "neider.ramirezdelgadillo@gmail.com",
+  "telefono": "3115331270"
+}

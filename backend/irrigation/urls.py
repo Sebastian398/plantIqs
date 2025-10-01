@@ -1,7 +1,9 @@
 from django.urls import path, include
+from . import views 
 from rest_framework.routers import DefaultRouter
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.conf.urls.static import static
 from .views import (SensorViewSet, ProgramacionRiegoViewSet, 
                     RegisterView, AccesoValidateView, 
                     CustomLoginView, UserDetailView, 
@@ -11,7 +13,7 @@ from .views import (SensorViewSet, ProgramacionRiegoViewSet,
                     CultivoViewSet, LogoutView, 
                     InfoFincaView, InfoFincaEditarView, 
                     UserUpdateView, CustomPasswordResetView, 
-                    CustomPasswordResetConfirmView)
+                    UpdateAvatarView)
 from rest_framework_simplejwt.views import TokenRefreshView
 
 
@@ -41,8 +43,10 @@ class ApiRootView(APIView):
             'infoFinca':request.build_absolute_uri('infoFinca/'),
             'info_finca_editar':request.build_absolute_uri('info_finca/editar/'),
             'usuario-actual-editar': request.build_absolute_uri('usuario-actual/editar/'),
-            'password_reset_request': request.build_absolute_uri('password-reset-request/'),
-            'password_reset_confirm': request.build_absolute_uri('password-reset-confirm/'),
+            'password_reset': request.build_absolute_uri('password_reset/'),
+            'password_reset_confirm': request.build_absolute_uri('password_reset/confirm/'),
+            'bomba': request.build_absolute_uri('bomba/'),
+            'humedad': request.build_absolute_uri('humedad/'),
 
         })
 
@@ -62,7 +66,10 @@ urlpatterns = [
     path('infoFinca/', InfoFincaView.as_view(), name='infoFinca'),
     path('info_finca/editar/', InfoFincaEditarView.as_view(), name='info_finca_editar'),
     path('usuario-actual/editar/', UserUpdateView.as_view(), name='usuario-actual-editar'),
-    path('password-reset-request/', CustomPasswordResetView.as_view(), name='password-reset-request'),
-    path('password-reset-confirm/', CustomPasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('password_reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+    path('update-avatar/', UpdateAvatarView.as_view(), name='update-avatar'),
+    path('bomba/', views.bomba_handler, name='bomba_handler'),  # GET/POST /api/bomba/ - Estado bomba (ya funciona: 200 OK)
+    path('humedad/', views.receive_lectura_sensor, name='receive_lectura_sensor'),
     path('', include(router.urls)),                              
 ]
+

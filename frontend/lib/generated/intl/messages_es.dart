@@ -32,23 +32,30 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m5(error) => "Error: ${error}";
 
-  static String m6(error) => "Error al cargar datos del usuario: ${error}";
+  static String m6(error) => "Error al guardar: ${error}";
 
-  static String m7(field) => "Por favor ingresa ${field}";
+  static String m7(error) => "Error al subir la foto: ${error}";
 
-  static String m8(hora) => "Hora inicio: ${hora}";
+  static String m8(error) => "Error al cargar datos del usuario: ${error}";
 
-  static String m9(name) => "Riego ${name}";
+  static String m9(field) => "Por favor ingresa ${field}";
 
-  static String m10(hora) => "Inicio riego: ${hora}";
+  static String m10(hora) => "Hora inicio: ${hora}";
 
-  static String m11(error) => "Error al guardar: ${error}";
+  static String m11(name) => "Riego ${name}";
 
-  static String m12(cultivo) => "Nuevo riego en ${cultivo}";
+  static String m12(hora) => "Inicio riego: ${hora}";
 
-  static String m13(hora) => "Riego a las ${hora}";
+  static String m13(nombre) =>
+      "¿Estás seguro de que quieres eliminar el cultivo \"${nombre}\"? Esto eliminará también sus programaciones de riego asociadas.";
 
-  static String m14(field) => "Por favor ingresa ${field}";
+  static String m14(error) => "Error al guardar: ${error}";
+
+  static String m15(cultivo) => "Nuevo riego en ${cultivo}";
+
+  static String m16(hora) => "Riego a las ${hora}";
+
+  static String m17(field) => "Por favor ingresa ${field}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -78,9 +85,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "confirmPasswordLabel": MessageLookupByLibrary.simpleMessage(
       "Confirma tu contraseña",
     ),
-    "confirmPasswordLabelPas": MessageLookupByLibrary.simpleMessage(
-      "Confirmación contraseña",
-    ),
+    "confirmPasswordLabelPas": MessageLookupByLibrary.simpleMessage("Token"),
     "confirmarEliminar": MessageLookupByLibrary.simpleMessage(
       "Confirmar eliminación",
     ),
@@ -127,20 +132,22 @@ class MessageLookup extends MessageLookupByLibrary {
     "errorFinca": m3,
     "errorGenerico": m4,
     "errorGenericoSnack": m5,
+    "errorGuardar": m6,
     "errorGuardarRiego": MessageLookupByLibrary.simpleMessage(
       "Error al guardar el riego",
     ),
     "errorNoToken": MessageLookupByLibrary.simpleMessage(
       "No se recibió token de acceso.",
     ),
-    "errorUsuario": m6,
+    "errorSubirFoto": m7,
+    "errorUsuario": m8,
     "farm_address": MessageLookupByLibrary.simpleMessage(
       "Dirección de la finca o predio",
     ),
     "farm_edit_title": MessageLookupByLibrary.simpleMessage(
       "Editar Datos de la Finca",
     ),
-    "farm_field_required": m7,
+    "farm_field_required": m9,
     "farm_info": MessageLookupByLibrary.simpleMessage(
       "Información o presentación",
     ),
@@ -166,10 +173,14 @@ class MessageLookup extends MessageLookupByLibrary {
     "here": MessageLookupByLibrary.simpleMessage("aquí."),
     "herePas": MessageLookupByLibrary.simpleMessage("aquí."),
     "hereRes": MessageLookupByLibrary.simpleMessage("aquí."),
-    "horaInicio": m8,
+    "horaInicio": m10,
     "humidity": MessageLookupByLibrary.simpleMessage("Humedad"),
+    "infoFinca": MessageLookupByLibrary.simpleMessage(
+      "Informacion de la finca",
+    ),
     "inicioRiego": MessageLookupByLibrary.simpleMessage("Inicio (HH:mm:ss)"),
-    "irrigation": m9,
+    "irrigation": m11,
+    "labelApagarBomba": MessageLookupByLibrary.simpleMessage("Apagar bomba"),
     "labelApellido": MessageLookupByLibrary.simpleMessage("Apellido"),
     "labelCorreo": MessageLookupByLibrary.simpleMessage("Correo Electrónico"),
     "labelDireccionFinca": MessageLookupByLibrary.simpleMessage(
@@ -178,7 +189,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "labelDuracionRiego": MessageLookupByLibrary.simpleMessage(
       "Duración de riego",
     ),
-    "labelInicioRiego": m10,
+    "labelEncenderBomba": MessageLookupByLibrary.simpleMessage(
+      "Encender bomba",
+    ),
+    "labelInicioRiego": m12,
     "labelNombre": MessageLookupByLibrary.simpleMessage("Nombre"),
     "labelNombreCultivo": MessageLookupByLibrary.simpleMessage(
       "Nombre Cultivo",
@@ -222,8 +236,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "menuStats": MessageLookupByLibrary.simpleMessage("Estadísticas"),
     "menuSystem": MessageLookupByLibrary.simpleMessage("Sistema"),
     "menuTooltip": MessageLookupByLibrary.simpleMessage("Abrir menú"),
+    "msgBombaApagada": MessageLookupByLibrary.simpleMessage("Bomba apagada"),
+    "msgBombaEncendida": MessageLookupByLibrary.simpleMessage(
+      "Bomba encendida",
+    ),
     "msgCamposObligatorios": MessageLookupByLibrary.simpleMessage(
       "Por favor completa todos los campos obligatorios",
+    ),
+    "msgCamposObligatoriosPe": MessageLookupByLibrary.simpleMessage(
+      "Todos los campos son obligatorios",
+    ),
+    "msgCultivoEliminado": MessageLookupByLibrary.simpleMessage(
+      "Cultivo eliminado correctamente",
     ),
     "msgCultivoGuardado": MessageLookupByLibrary.simpleMessage(
       "Cultivo y programación de riego guardados correctamente ✅",
@@ -237,9 +261,16 @@ class MessageLookup extends MessageLookupByLibrary {
     "msgDuracionInvalida": MessageLookupByLibrary.simpleMessage(
       "Ingrese duración válida",
     ),
-    "msgErrorGuardar": m11,
+    "msgEliminarCultivo": m13,
+    "msgErrorGuardar": m14,
     "msgErrorRiego": MessageLookupByLibrary.simpleMessage(
       "Error al guardar programación de riego",
+    ),
+    "msgFincaGuardada": MessageLookupByLibrary.simpleMessage(
+      "Información de la finca guardada correctamente",
+    ),
+    "msgFotoPerfilOk": MessageLookupByLibrary.simpleMessage(
+      "Foto de perfil actualizada correctamente",
     ),
     "msgHoraRequerida": MessageLookupByLibrary.simpleMessage(
       "Seleccione la hora de inicio",
@@ -266,7 +297,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "notRegisteredRes": MessageLookupByLibrary.simpleMessage(
       "Si no te has inscrito regístrate ",
     ),
-    "nuevoRiego": m12,
+    "nuevoRiego": m15,
     "passwordEmptyError": MessageLookupByLibrary.simpleMessage(
       "Por favor ingresa tu contraseña",
     ),
@@ -321,7 +352,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "resetPasswordTitlePas": MessageLookupByLibrary.simpleMessage(
       "Restablecer contraseña",
     ),
-    "riegoALas": m13,
+    "riegoALas": m16,
     "riegoActualizado": MessageLookupByLibrary.simpleMessage(
       "Riego actualizado",
     ),
@@ -347,6 +378,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "settings_farm_data": MessageLookupByLibrary.simpleMessage(
       "Datos de la Finca",
     ),
+    "settings_language": MessageLookupByLibrary.simpleMessage("Idioma"),
     "settings_light_mode": MessageLookupByLibrary.simpleMessage("Modo claro"),
     "settings_logout": MessageLookupByLibrary.simpleMessage("Cerrar Sesión"),
     "settings_logout_error": MessageLookupByLibrary.simpleMessage(
@@ -377,7 +409,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "user_email_invalid": MessageLookupByLibrary.simpleMessage(
       "Por favor ingresa un correo válido",
     ),
-    "user_field_required": m14,
+    "user_field_required": m17,
     "user_first_name": MessageLookupByLibrary.simpleMessage("Nombres"),
     "user_last_name": MessageLookupByLibrary.simpleMessage("Apellidos"),
     "user_phone": MessageLookupByLibrary.simpleMessage("Teléfono de contacto"),

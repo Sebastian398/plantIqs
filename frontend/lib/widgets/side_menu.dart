@@ -26,6 +26,12 @@ class _HoverMenuItemState extends State<HoverMenuItem> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Responsivo: íconos y texto cambian según el ancho de pantalla
+    double iconSize = screenWidth < 800 ? 28 : 40;
+    double fontSize = screenWidth < 800 ? 10 : 12;
+
     return MouseRegion(
       onEnter: _onEnter,
       onExit: _onExit,
@@ -36,12 +42,14 @@ class _HoverMenuItemState extends State<HoverMenuItem> {
           duration: const Duration(milliseconds: 150),
           opacity: _isHovered ? 0.7 : 1.0,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(widget.icon, color: colors.tertiary, size: 40),
-              const SizedBox(height: 1),
+              Icon(widget.icon, color: colors.onPrimary, size: iconSize),
+              const SizedBox(height: 4),
               Text(
                 widget.label,
-                style: TextStyle(color: colors.tertiary, fontSize: 12),
+                style: TextStyle(color: colors.onPrimary, fontSize: fontSize),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -61,40 +69,65 @@ class SideMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final localizations = AppLocalizations.of(context);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 600) {
-          // Pantallas anchas: menú lateral fijo
+          // ✅ Pantallas anchas: menú lateral fijo con sombra derecha
           return Container(
             width: 85,
-            color: colors.surface,
             padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: colors.primary,
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                  offset: Offset(5, 0), // sombra hacia la derecha
+                ),
+              ],
+            ),
+            // ✅ Evitamos overflow: si los ítems no caben, se hace scroll
             child: Column(
               children: [
-                HoverMenuItem(
-                  icon: Icons.person,
-                  label: localizations.menuProfile,
-                  onTap: () => onItemSelected(0),
+                Expanded(
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(
+                      scrollbars: false, // ❌ oculta la barra de scroll
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          HoverMenuItem(
+                            icon: Icons.person,
+                            label: localizations.menuProfile,
+                            onTap: () => onItemSelected(0),
+                          ),
+                          const SizedBox(height: 220),
+                          HoverMenuItem(
+                            icon: Icons.eco,
+                            label: localizations.menuIrrigations,
+                            onTap: () => onItemSelected(1),
+                          ),
+                          const SizedBox(height: 20),
+                          HoverMenuItem(
+                            icon: Icons.equalizer,
+                            label: localizations.menuStats,
+                            onTap: () => onItemSelected(2),
+                          ),
+                          const SizedBox(height: 20),
+                          HoverMenuItem(
+                            icon: Icons.apps,
+                            label: localizations.menuSystem,
+                            onTap: () => onItemSelected(3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 220),
-                HoverMenuItem(
-                  icon: Icons.eco,
-                  label: localizations.menuIrrigations,
-                  onTap: () => onItemSelected(1),
-                ),
-                const SizedBox(height: 20),
-                HoverMenuItem(
-                  icon: Icons.equalizer,
-                  label: localizations.menuStats,
-                  onTap: () => onItemSelected(2),
-                ),
-                const SizedBox(height: 20),
-                HoverMenuItem(
-                  icon: Icons.apps,
-                  label: localizations.menuSystem,
-                  onTap: () => onItemSelected(3),
-                ),
-                const Spacer(),
+                // ✅ Ajustamos configuración al fondo
                 HoverMenuItem(
                   icon: Icons.settings,
                   label: localizations.menuSettings,
@@ -104,7 +137,7 @@ class SideMenu extends StatelessWidget {
             ),
           );
         } else {
-          // Pantallas pequeñas: menú oculto, usa Drawer y botón hamburguesa
+          // ✅ Pantallas pequeñas: botón hamburguesa
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(

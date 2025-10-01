@@ -26,7 +26,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         'first_name': user.first_name or user.username,
         'email': user.email,
         'reset_password_url': f"{reset_url}?token={reset_password_token.key}",
-        'reset_password_token': reset_password_token.key,  # Token explícito
+        'token': reset_password_token.key,  # Token explícito
         'domain': instance.request.get_host(),
         'site_name': 'PlantIQ - Sistema de Riego',
     }

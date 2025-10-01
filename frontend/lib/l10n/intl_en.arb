@@ -11,6 +11,12 @@
   "labelDireccionFinca": "Farm address:",
   "labelPresentacionFinca": "Information or presentation:",
   "labelUbicacionFinca": "Farm or property location",
+  "infoFinca": "Farm information",
+  "msgCamposObligatoriosPe": "All fields are required",
+  "msgFincaGuardada": "Farm information saved successfully",
+  "msgFotoPerfilOk": "Profile photo updated successfully",
+  "errorSubirFoto": "Error uploading photo: {error}",
+  "errorGuardar": "Error saving: {error}",
 
   "msgCamposObligatorios": "Please complete all required fields",
   "msgDuracionEntero": "Irrigation duration must be an integer",
@@ -27,6 +33,8 @@
   "labelInicioRiego": "Irrigation start: {hora}",
   "labelDuracionRiego": "Irrigation duration",
   "botonGuardar": "Save",
+  "msgEliminarCultivo": "Are you sure you want to delete the crop \"{nombre}\"? This will also remove its associated irrigation schedules.",
+  "msgCultivoEliminado": "Crop deleted successfully",
 
   "listadoRiegos": "Irrigation list by crop",
   "errorGenerico": "Error: {error}",
@@ -58,6 +66,7 @@
   "noRiegos": "No irrigation scheduled",
 
   "settings_title": "Settings",
+  "settings_language": "Language",
   "settings_light_mode": "Light Mode",
   "settings_user_data": "User Data",
   "settings_farm_data": "Farm Data",
@@ -100,6 +109,10 @@
   "humidity": "Humidity",
   "temperature": "Temperature",
   "ph": "pH",
+  "msgBombaEncendida": "Pump turned on",
+  "msgBombaApagada": "Pump turned off",
+  "labelApagarBomba": "Turn off pump",
+  "labelEncenderBomba": "Turn on pump",
 
   "loginTitle": "Login",
   "emailLabel": "Email",

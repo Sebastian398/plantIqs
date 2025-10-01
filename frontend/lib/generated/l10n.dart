@@ -164,6 +164,66 @@ class AppLocalizations {
     );
   }
 
+  /// `Farm information`
+  String get infoFinca {
+    return Intl.message(
+      'Farm information',
+      name: 'infoFinca',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All fields are required`
+  String get msgCamposObligatoriosPe {
+    return Intl.message(
+      'All fields are required',
+      name: 'msgCamposObligatoriosPe',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Farm information saved successfully`
+  String get msgFincaGuardada {
+    return Intl.message(
+      'Farm information saved successfully',
+      name: 'msgFincaGuardada',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Profile photo updated successfully`
+  String get msgFotoPerfilOk {
+    return Intl.message(
+      'Profile photo updated successfully',
+      name: 'msgFotoPerfilOk',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error uploading photo: {error}`
+  String errorSubirFoto(Object error) {
+    return Intl.message(
+      'Error uploading photo: $error',
+      name: 'errorSubirFoto',
+      desc: '',
+      args: [error],
+    );
+  }
+
+  /// `Error saving: {error}`
+  String errorGuardar(Object error) {
+    return Intl.message(
+      'Error saving: $error',
+      name: 'errorGuardar',
+      desc: '',
+      args: [error],
+    );
+  }
+
   /// `Please complete all required fields`
   String get msgCamposObligatorios {
     return Intl.message(
@@ -307,6 +367,26 @@ class AppLocalizations {
   /// `Save`
   String get botonGuardar {
     return Intl.message('Save', name: 'botonGuardar', desc: '', args: []);
+  }
+
+  /// `Are you sure you want to delete the crop "{nombre}"? This will also remove its associated irrigation schedules.`
+  String msgEliminarCultivo(Object nombre) {
+    return Intl.message(
+      'Are you sure you want to delete the crop "$nombre"? This will also remove its associated irrigation schedules.',
+      name: 'msgEliminarCultivo',
+      desc: '',
+      args: [nombre],
+    );
+  }
+
+  /// `Crop deleted successfully`
+  String get msgCultivoEliminado {
+    return Intl.message(
+      'Crop deleted successfully',
+      name: 'msgCultivoEliminado',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Irrigation list by crop`
@@ -567,6 +647,16 @@ class AppLocalizations {
   /// `Settings`
   String get settings_title {
     return Intl.message('Settings', name: 'settings_title', desc: '', args: []);
+  }
+
+  /// `Language`
+  String get settings_language {
+    return Intl.message(
+      'Language',
+      name: 'settings_language',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Light Mode`
@@ -902,6 +992,46 @@ class AppLocalizations {
   /// `pH`
   String get ph {
     return Intl.message('pH', name: 'ph', desc: '', args: []);
+  }
+
+  /// `Pump turned on`
+  String get msgBombaEncendida {
+    return Intl.message(
+      'Pump turned on',
+      name: 'msgBombaEncendida',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pump turned off`
+  String get msgBombaApagada {
+    return Intl.message(
+      'Pump turned off',
+      name: 'msgBombaApagada',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turn off pump`
+  String get labelApagarBomba {
+    return Intl.message(
+      'Turn off pump',
+      name: 'labelApagarBomba',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Turn on pump`
+  String get labelEncenderBomba {
+    return Intl.message(
+      'Turn on pump',
+      name: 'labelEncenderBomba',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Login`

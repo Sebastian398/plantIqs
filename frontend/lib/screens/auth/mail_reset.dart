@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'register_screen.dart';
 import '../auth/login_screen.dart';
-import 'package:plantiq/widgets/theme_logo.dart';
 import 'package:plantiq/main.dart';
 import 'package:plantiq/generated/l10n.dart';
 import '../auth/reset_password.dart';
@@ -24,16 +23,40 @@ class _SimpleHoverButtonState extends State<SimpleHoverButton> {
   bool _isHovered = false;
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: _isHovered ? 0.7 : 1.0,
-          child: widget.child,
+        child: AnimatedContainer(
+          /// ✅ Animación suave entre estados hover / normal
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? colors.onSurface.withOpacity(0.9) // hover un poco más claro
+                : colors.onSurface, // color normal
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: _isHovered ? 15 : 15, // más sombra en hover
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+          child: DefaultTextStyle(
+            /// ✅ Asegura que el texto dentro se vea bien
+            style: TextStyle(
+              color: colors.onPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+            child: widget.child,
+          ),
         ),
       ),
     );
@@ -42,8 +65,16 @@ class _SimpleHoverButtonState extends State<SimpleHoverButton> {
 
 class SimpleHoverLink extends StatefulWidget {
   final VoidCallback onTap;
-  final Widget child;
-  const SimpleHoverLink({required this.onTap, required this.child, super.key});
+  final String text;
+  final Color normalColor;
+  final Color hoverColor;
+  const SimpleHoverLink({
+    required this.onTap,
+    required this.text,
+    required this.normalColor,
+    required this.hoverColor,
+    super.key,
+  });
   @override
   _SimpleHoverLinkState createState() => _SimpleHoverLinkState();
 }
@@ -58,10 +89,14 @@ class _SimpleHoverLinkState extends State<SimpleHoverLink> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: _isHovered ? 0.7 : 1.0,
-          child: widget.child,
+        child: Text(
+          widget.text,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: _isHovered ? widget.hoverColor : widget.normalColor,
+            decoration: TextDecoration.none, // ✅ subrayado en hover
+          ),
         ),
       ),
     );
@@ -81,7 +116,9 @@ class _MailResetScreen extends State<MailResetScreen> {
   bool _isLoading = false;
 
   Future<bool> sendResetEmail(String email) async {
-    final url = Uri.parse('http://localhost:8000/api/password_reset/');
+    final url = Uri.parse(
+      'https://plantiq-07xw.onrender.com/api/password_reset/',
+    );
     try {
       final response = await http.post(
         url,
@@ -131,7 +168,7 @@ class _MailResetScreen extends State<MailResetScreen> {
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: colors.secondary,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -139,11 +176,19 @@ class _MailResetScreen extends State<MailResetScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: colors.surface,
+                  color: colors.primary,
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 width: 600,
-                height: 600,
+                height: 500,
                 padding: const EdgeInsets.all(40),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -157,12 +202,19 @@ class _MailResetScreen extends State<MailResetScreen> {
                           ),
                         );
                       },
-                      child: ThemedLogo(width: 400),
+                      child: Image.asset(
+                        'assets/images/Logo_blanco.png',
+                        width: 350,
+                      ),
                     ),
                     const SizedBox(height: 25),
                     Text(
                       localizations.resetPasswordTitle,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: TextStyle(
+                        color: colors.onPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                     const SizedBox(height: 25),
                     Form(
@@ -172,11 +224,41 @@ class _MailResetScreen extends State<MailResetScreen> {
                         children: [
                           TextFormField(
                             controller: _emailController,
-                            style: TextStyle(color: colors.tertiary),
+                            style: TextStyle(
+                              color: colors.onSecondary,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 15,
+                            ),
+                            cursorColor: colors.onSecondary,
                             decoration: InputDecoration(
                               labelText: localizations.emailLabelRes,
-                              prefixIcon: const Icon(Icons.email),
+                              labelStyle: TextStyle(
+                                color: colors.onSecondary,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 15,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email,
+                                color: colors.onSecondary,
+                                size: 20,
+                              ),
+                              filled: true,
+                              fillColor: colors.tertiary,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.onPrimary,
+                                  width: 1,
+                                ),
+                              ),
+                              // Línea cuando está enfocado
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.secondary,
+                                  width: 1,
+                                ),
+                              ),
                             ),
+
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return localizations.emailRequired;
@@ -193,42 +275,27 @@ class _MailResetScreen extends State<MailResetScreen> {
                                 ? const CircularProgressIndicator()
                                 : SimpleHoverButton(
                                     onTap: _submitForm,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 35,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            colors.primary,
-                                            colors.secondary,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        localizations.sendEmail,
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium,
-                                      ),
-                                    ),
+                                    child: Text(localizations.sendEmail),
                                   ),
                           ),
                           const SizedBox(height: 20),
                           Center(
                             child: RichText(
                               text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: TextStyle(
+                                  color: colors.onPrimary,
+                                  fontSize: 16,
+                                ),
                                 children: [
                                   TextSpan(
                                     text: localizations.notRegisteredRes,
                                   ),
                                   WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
                                     child: SimpleHoverLink(
+                                      text: localizations.hereRes,
+                                      normalColor: colors.onSurface,
+                                      hoverColor: colors.onPrimary,
                                       onTap: () {
                                         Navigator.push(
                                           context,
@@ -238,14 +305,6 @@ class _MailResetScreen extends State<MailResetScreen> {
                                           ),
                                         );
                                       },
-                                      child: Text(
-                                        localizations.hereRes,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ],
@@ -255,11 +314,18 @@ class _MailResetScreen extends State<MailResetScreen> {
                           Center(
                             child: RichText(
                               text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: TextStyle(
+                                  color: colors.onPrimary,
+                                  fontSize: 16,
+                                ),
                                 children: [
                                   TextSpan(text: localizations.loginText),
                                   WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
                                     child: SimpleHoverLink(
+                                      text: localizations.hereRes,
+                                      normalColor: colors.onSurface,
+                                      hoverColor: colors.onPrimary,
                                       onTap: () {
                                         Navigator.push(
                                           context,
@@ -269,14 +335,6 @@ class _MailResetScreen extends State<MailResetScreen> {
                                           ),
                                         );
                                       },
-                                      child: Text(
-                                        localizations.hereRes,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ],

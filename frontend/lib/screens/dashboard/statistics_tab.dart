@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:plantiq/generated/l10n.dart';
-import '../../models/cultivo.dart';
-import '../../models/Riego.dart';
-import '../../services/api_service.dart';
+import 'package:fl_chart/fl_chart.dart'; // Librería para gráficos
+import 'package:plantiq/generated/l10n.dart'; // Traducciones i18n
+import '../../models/cultivo.dart'; // Modelo Cultivo
+import '../../models/Riego.dart'; // Modelo LecturaSensor
+import '../../services/api_service.dart'; // Servicios API
 
+/// Pantalla que muestra estadísticas de los cultivos,
+/// incluyendo gráficos de humedad y temperatura.
 class StatisticsTab extends StatefulWidget {
   const StatisticsTab({super.key});
 
@@ -13,57 +15,73 @@ class StatisticsTab extends StatefulWidget {
 }
 
 class _StatisticsTabState extends State<StatisticsTab> {
+  /// Lista de cultivos obtenida desde la API
   late Future<List<Cultivo1>> futureCultivos;
+
+  /// Lista de lecturas de sensores (humedad, temperatura)
   Future<List<LecturaSensor>>? futureLecturas;
+
+  /// Cultivo seleccionado en el dropdown
   Cultivo1? selectedCultivo;
+
+  /// Tipo de gráfico: 'line' | 'bar' | 'radialBar'
   String chartType = 'line';
 
   @override
   void initState() {
     super.initState();
+    // Carga inicial de cultivos
     futureCultivos = ApiService.getCultivos1();
-    // futureLecturas no se carga aquí para evitar carga al inicio sin cultivo
+    // No se cargan lecturas todavía hasta seleccionar un cultivo
   }
 
+  /// Función que carga las lecturas de sensores de un cultivo
   void cargarLecturas(int cultivoId) {
     futureLecturas = ApiService.getLecturasSensores(cultivoId: cultivoId);
-    setState(() {});
+    setState(() {}); // Actualiza la UI al asignar las lecturas
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme; // Colores del tema actual
+    final loc = AppLocalizations.of(context); // Traducciones
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: colors.secondary,
       body: FutureBuilder<List<Cultivo1>>(
-        future: futureCultivos,
+        future: futureCultivos, // Future que obtiene los cultivos
         builder: (context, cultivoSnapshot) {
+          // Mientras se cargan los cultivos
           if (cultivoSnapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(color: colors.tertiary),
             );
-          } else if (cultivoSnapshot.hasError) {
+          }
+          // Si ocurre un error al cargar los cultivos
+          else if (cultivoSnapshot.hasError) {
             return Center(child: Text('Error: ${cultivoSnapshot.error}'));
-          } else if (!cultivoSnapshot.hasData ||
-              cultivoSnapshot.data!.isEmpty) {
+          }
+          // Si no hay cultivos disponibles
+          else if (!cultivoSnapshot.hasData || cultivoSnapshot.data!.isEmpty) {
             return Center(child: Text(loc.noCrops));
           }
 
+          // Cultivos cargados correctamente
           final cultivos = cultivoSnapshot.data!;
 
           return Column(
             children: [
+              /// Fila con los dropdowns para seleccionar cultivo y tipo de gráfico
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
+                    // Dropdown de cultivos
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: colors.surface,
+                          color: colors.primary,
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: DropdownButtonHideUnderline(
@@ -71,10 +89,17 @@ class _StatisticsTabState extends State<StatisticsTab> {
                             isExpanded: true,
                             hint: Text(
                               loc.selectCrop,
-                              style: Theme.of(context).textTheme.bodyLarge,
+                              style: TextStyle(
+                                color: colors.onPrimary,
+                                fontSize: 16,
+                              ),
                             ),
-                            dropdownColor: colors.surface,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            borderRadius: BorderRadius.circular(5),
+                            dropdownColor: colors.primary,
+                            style: TextStyle(
+                              color: colors.onPrimary,
+                              fontSize: 16,
+                            ),
                             value: selectedCultivo,
                             items: cultivos
                                 .map(
@@ -89,27 +114,39 @@ class _StatisticsTabState extends State<StatisticsTab> {
                                 selectedCultivo = c;
                               });
                               if (c != null) {
-                                cargarLecturas(c.id);
+                                cargarLecturas(
+                                  c.id,
+                                ); // Cargar lecturas al seleccionar
                               }
                             },
+                            icon: Icon(
+                              Icons.arrow_drop_down, // Icono de la flecha
+                              color: colors.onPrimary, // Color de la flecha
+                              size: 30, // Tamaño de la flecha
+                            ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
+                    // Dropdown de tipo de gráfico
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: colors.surface,
+                          color: colors.primary,
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: chartType,
                             isExpanded: true,
-                            dropdownColor: colors.surface,
-                            style: Theme.of(context).textTheme.bodyLarge,
+                            borderRadius: BorderRadius.circular(5),
+                            dropdownColor: colors.primary,
+                            style: TextStyle(
+                              color: colors.onPrimary,
+                              fontSize: 16,
+                            ),
                             items: [
                               DropdownMenuItem(
                                 value: 'line',
@@ -126,9 +163,15 @@ class _StatisticsTabState extends State<StatisticsTab> {
                             ],
                             onChanged: (v) {
                               setState(() {
-                                chartType = v ?? 'line';
+                                chartType =
+                                    v ?? 'line'; // Cambiar tipo de gráfico
                               });
                             },
+                            icon: Icon(
+                              Icons.arrow_drop_down, // Icono de la flecha
+                              color: colors.onPrimary, // Color de la flecha
+                              size: 30, // Tamaño de la flecha
+                            ),
                           ),
                         ),
                       ),
@@ -136,29 +179,48 @@ class _StatisticsTabState extends State<StatisticsTab> {
                   ],
                 ),
               ),
+
+              /// Área principal donde se muestran los gráficos
               Expanded(
                 child: futureLecturas == null
-                    ? Center(child: Text(loc.selectPlotInstruction))
+                    ? Center(
+                        child: Text(
+                          loc.selectPlotInstruction,
+                          style: TextStyle(color: colors.onPrimary),
+                        ),
+                      )
                     : FutureBuilder<List<LecturaSensor>>(
                         future: futureLecturas,
                         builder: (context, lecturaSnapshot) {
+                          // Mientras se cargan las lecturas
                           if (lecturaSnapshot.connectionState ==
                               ConnectionState.waiting) {
                             return Center(
                               child: CircularProgressIndicator(
-                                color: colors.tertiary,
+                                color: colors.onPrimary,
                               ),
                             );
-                          } else if (lecturaSnapshot.hasError) {
+                          }
+                          // Error al cargar lecturas
+                          else if (lecturaSnapshot.hasError) {
                             return Center(
                               child: Text('Error: ${lecturaSnapshot.error}'),
                             );
-                          } else if (!lecturaSnapshot.hasData ||
+                          }
+                          // Si no hay datos
+                          else if (!lecturaSnapshot.hasData ||
                               lecturaSnapshot.data!.isEmpty) {
-                            return Center(child: Text('No hay datos'));
+                            return Center(
+                              child: Text(
+                                'No hay datos',
+                                style: TextStyle(color: colors.onPrimary),
+                              ),
+                            );
                           }
 
                           final lecturas = lecturaSnapshot.data!;
+
+                          // Filtrar lecturas por tipo de sensor
                           final humedadLecturas = lecturas
                               .where((l) => l.tipoSensor == 'humedad')
                               .toList();
@@ -166,6 +228,7 @@ class _StatisticsTabState extends State<StatisticsTab> {
                               .where((l) => l.tipoSensor == 'temperatura')
                               .toList();
 
+                          // Depuración: imprimir lecturas
                           print('Lecturas recibidas (${lecturas.length}):');
                           for (var l in lecturas) {
                             print(
@@ -173,9 +236,11 @@ class _StatisticsTabState extends State<StatisticsTab> {
                             );
                           }
 
+                          // Lista con gráficos de humedad y temperatura
                           return ListView(
                             padding: const EdgeInsets.all(12),
                             children: [
+                              // Gráfico de humedad
                               Text(
                                 loc.humidity,
                                 style: Theme.of(context).textTheme.titleLarge,
@@ -188,6 +253,8 @@ class _StatisticsTabState extends State<StatisticsTab> {
                                 ),
                               ),
                               const SizedBox(height: 20),
+
+                              // Gráfico de temperatura
                               Text(
                                 loc.temperature,
                                 style: Theme.of(context).textTheme.titleLarge,
@@ -211,9 +278,11 @@ class _StatisticsTabState extends State<StatisticsTab> {
     );
   }
 
+  /// Construye un gráfico según el tipo seleccionado
   Widget _buildChart(List<LecturaSensor> lecturas, Color color) {
     if (lecturas.isEmpty) return Center(child: Text('No hay datos'));
 
+    // Transformar lecturas a puntos para los gráficos
     final spots = <FlSpot>[];
     for (int i = 0; i < lecturas.length; i++) {
       spots.add(FlSpot(i.toDouble(), lecturas[i].valor));
@@ -221,6 +290,7 @@ class _StatisticsTabState extends State<StatisticsTab> {
 
     switch (chartType) {
       case 'bar':
+        // Gráfico de barras
         return BarChart(
           BarChartData(
             barGroups: spots
@@ -242,7 +312,9 @@ class _StatisticsTabState extends State<StatisticsTab> {
             borderData: FlBorderData(show: false),
           ),
         );
+
       case 'radialBar':
+        // Gráfico radial (tipo PieChart)
         final lastValue = spots.last.y;
         return PieChart(
           PieChartData(
@@ -269,7 +341,9 @@ class _StatisticsTabState extends State<StatisticsTab> {
             ],
           ),
         );
+
       default:
+        // Gráfico de líneas
         return LineChart(
           LineChartData(
             lineBarsData: [

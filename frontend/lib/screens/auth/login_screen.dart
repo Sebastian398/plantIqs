@@ -2,7 +2,6 @@ import 'register_screen.dart';
 import 'package:plantiq/main.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../auth/mail_reset.dart';
-import 'package:plantiq/widgets/theme_logo.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,18 +22,43 @@ class SimpleHoverButton extends StatefulWidget {
 
 class _SimpleHoverButtonState extends State<SimpleHoverButton> {
   bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: _isHovered ? 0.7 : 1.0,
-          child: widget.child,
+        child: AnimatedContainer(
+          /// ✅ Animación suave entre estados hover / normal
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: _isHovered
+                ? colors.onSurface.withOpacity(0.9) // hover un poco más claro
+                : colors.onSurface, // color normal
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: _isHovered ? 15 : 15, // más sombra en hover
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 5),
+          child: DefaultTextStyle(
+            /// ✅ Asegura que el texto dentro se vea bien
+            style: TextStyle(
+              color: colors.onPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+            child: widget.child,
+          ),
         ),
       ),
     );
@@ -43,8 +67,16 @@ class _SimpleHoverButtonState extends State<SimpleHoverButton> {
 
 class SimpleHoverLink extends StatefulWidget {
   final VoidCallback onTap;
-  final Widget child;
-  const SimpleHoverLink({required this.onTap, required this.child, super.key});
+  final String text;
+  final Color normalColor;
+  final Color hoverColor;
+  const SimpleHoverLink({
+    required this.onTap,  
+    required this.text, 
+    required this.normalColor,
+    required this.hoverColor, 
+    super.key}
+  );
   @override
   _SimpleHoverLinkState createState() => _SimpleHoverLinkState();
 }
@@ -54,15 +86,19 @@ class _SimpleHoverLinkState extends State<SimpleHoverLink> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click, // 👆 cambia cursor
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: _isHovered ? 0.7 : 1.0,
-          child: widget.child,
+        child: Text(
+          widget.text,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: _isHovered ? widget.hoverColor : widget.normalColor,
+            decoration:TextDecoration.none, // ✅ subrayado en hover
+          ),
         ),
       ),
     );
@@ -99,6 +135,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+    bool _obscurePassword = true;
+
   Future<void> _submitForm() async {
     final loc = AppLocalizations.of(context);
     if (_formKey.currentState!.validate()) {
@@ -106,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
       try {
         final response = await http.post(
-          Uri.parse('http://127.0.0.1:8000/api/login/'),
+          Uri.parse('https://plantiq-07xw.onrender.com/api/login/'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode({'email': email, 'password': password}),
         );
@@ -165,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final loc = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: colors.secondary,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -173,8 +211,16 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: colors.surface,
+                  color: colors.primary,
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black, // sombra suave
+                      blurRadius: 10, // qué tan difusa
+                      spreadRadius: 2, // expansión
+                      offset: const Offset(0, 5), // desplazamiento (x,y)
+                    ),
+                  ],
                 ),
                 width: 600,
                 height: 600,
@@ -191,14 +237,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       },
-                      child: const ThemedLogo(width: 400),
+                      child: Image.asset(
+                        'assets/images/Logo_blanco.png',
+                        width: 350,
+                      ),
                     ),
                     const SizedBox(height: 25),
                     Text(
                       loc.loginTitle,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colors.onPrimary,
+                      ),
                     ),
                     const SizedBox(height: 25),
+
                     Form(
                       key: _formKey,
                       child: Column(
@@ -206,10 +260,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           TextFormField(
                             controller: _emailController,
-                            style: TextStyle(color: colors.onSurface),
+                            style: TextStyle(
+                              color: colors.onSecondary,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 15,
+                            ),
+                            cursorColor: colors.onSecondary,
                             decoration: InputDecoration(
                               labelText: loc.emailLabel,
-                              prefixIcon: const Icon(Icons.email),
+                              labelStyle: TextStyle(
+                                color: colors.onSecondary,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 15,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email,
+                                color: colors.onSecondary,
+                                size: 20,
+                              ),
+                              filled: true,
+                              fillColor: colors.tertiary,
+                              // Línea blanca cuando está deshabilitado o sin foco
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.onPrimary,
+                                  width: 1,
+                                ),
+                              ),
+                              // Línea cuando está enfocado
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.secondary,
+                                  width: 1,
+                                ),
+                              ),
+                              // Línea azul cuando tiene el foco
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -221,14 +306,59 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
+
                           const SizedBox(height: 30),
+
+                          /// 🔒 Contraseña con ojito 👁️
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: true,
-                            style: TextStyle(color: colors.onSurface),
+                            obscureText: _obscurePassword,
+                            style: TextStyle(
+                              color: colors.onSecondary,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 15,
+                            ),
+                            cursorColor: colors.onSecondary,
                             decoration: InputDecoration(
                               labelText: loc.passwordLabel,
-                              prefixIcon: const Icon(Icons.lock),
+                              labelStyle: TextStyle(
+                                color: colors.onSecondary,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 15,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock,
+                                color: colors.onSecondary,
+                                size: 20,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: colors.onSecondary,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              filled: true,
+                              fillColor: colors.tertiary,
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.onPrimary,
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: colors.secondary,
+                                  width: 1,
+                                ),
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -244,52 +374,33 @@ class _LoginScreenState extends State<LoginScreen> {
                           Center(
                             child: SimpleHoverButton(
                               onTap: _submitForm,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 35,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [colors.primary, colors.secondary],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  loc.loginButton,
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ),
+                              child: Text(loc.loginButton),
                             ),
                           ),
                           const SizedBox(height: 20),
                           Center(
                             child: RichText(
                               text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: TextStyle(color: colors.onPrimary, fontSize: 16),
                                 children: [
-                                  TextSpan(text: loc.registerPrompt),
+                                  TextSpan(
+                                    text: loc.registerPrompt
+                                  ),
                                   WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
                                     child: SimpleHoverLink(
+                                      text: loc.registerHere,
+                                      normalColor: colors.onSurface,
+                                      hoverColor: colors.onPrimary,
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const RegisterScreen(),
+                                              const RegisterScreen(),
                                           ),
                                         );
                                       },
-                                      child: Text(
-                                        loc.registerHere,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ],
@@ -299,28 +410,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           Center(
                             child: RichText(
                               text: TextSpan(
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                style: TextStyle(color: colors.onPrimary, fontSize: 16),
                                 children: [
                                   TextSpan(text: loc.forgotPasswordPrompt),
                                   WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
                                     child: SimpleHoverLink(
+                                      text: loc.registerHere,
+                                      normalColor: colors.onSurface,
+                                      hoverColor: colors.onPrimary,
                                       onTap: () {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const MailResetScreen(),
+                                              const MailResetScreen(),
                                           ),
                                         );
                                       },
-                                      child: Text(
-                                        loc.registerHere, // You can add a new key like 'here' if needed separately
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: colors.primary,
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ],

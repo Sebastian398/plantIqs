@@ -5,17 +5,14 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
 
 class Sensor(models.Model):
     HUMEDAD = 'humedad'
-    TEMPERATURA = 'temperatura'
 
     TIPO_CHOICES = [
-        (HUMEDAD, 'Humedad'),
-        (TEMPERATURA, 'Temperatura'),
+        (HUMEDAD, 'Humedad')
     ]
 
     tipo = models.CharField(max_length=12, choices=TIPO_CHOICES)    
@@ -90,6 +87,8 @@ class Finca(models.Model):
 class PerfilUsuario(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='perfilusuario')
     telefono = models.CharField(max_length=20, blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"Perfil de {self.user.username}"
@@ -143,40 +142,9 @@ class TokenRestablecimiento(models.Model):
             expira=expira
         )
 
-
-#from rest_framework import viewsets
-#from .serializers import SensorSerializer, ProgramacionRiegoSerializer    
-#from .models import Sensor, ProgramacionRiego
-#import RPi.GPIO as GPIO
-#import time
-
-#RELAY_PIN = 17
-#GPIO.setmode(GPIO.BCM)
-#GPIO.setup(RELAY_PIN, GPIO.OUT)
-#GPIO.output(RELAY_PIN, GPIO.LOW)
-
-#class SensorViewSet(viewsets.ModelViewSet):
-#    queryset = Sensor.objects.all().order_by('-fecha_registro')
-#    serializer_class = SensorSerializer
-
-#class ProgramacionRiegoViewSet(viewsets.ModelViewSet):
-#    queryset = ProgramacionRiego.objects.filter(activo=True)
-#    serializer_class = ProgramacionRiegoSerializer
-
-#    @action(detail=True, methods=['post'])
-#    def activar_riego(self, request, pk=None):
-#        programacion = self.get_object()
-#        duracion_minutos = programacion.duracion
-#        duracion_segundos = duracion_minutos * 60  # Convierte minutos a segundos
-        
-#        try:
-#            GPIO.output(RELAY_PIN, GPIO.HIGH)
-#            time.sleep(duracion_segundos)
-#            GPIO.output(RELAY_PIN, GPIO.LOW)
-
-#            mensaje = f'Riego activado por {duracion_minutos} minutos correctamente.'
-#            return Response({'mensaje': mensaje})
-
-#        except Exception as e:
-#            GPIO.output(RELAY_PIN, GPIO.LOW)
-#            return Response({'error': f'Error al activar riego: {str(e)}'}, status=500)
+class BombaStatus(models.Model):
+    is_on = models.BooleanField(default=False)
+    last_updated = models.DateTimeField(auto_now=True)
+    class Meta:
+        verbose_name = "Estado Bomba"
+        verbose_name_plural = "Estados Bomba"

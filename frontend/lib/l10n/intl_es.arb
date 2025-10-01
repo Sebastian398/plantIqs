@@ -11,6 +11,12 @@
   "labelDireccionFinca": "Dirección de la finca:",
   "labelPresentacionFinca": "Información o presentación:",
   "labelUbicacionFinca": "Ubicación de la finca o predio",
+  "infoFinca": "Informacion de la finca",
+  "msgCamposObligatoriosPe": "Todos los campos son obligatorios",
+  "msgFincaGuardada": "Información de la finca guardada correctamente",
+  "msgFotoPerfilOk": "Foto de perfil actualizada correctamente",
+  "errorSubirFoto": "Error al subir la foto: {error}",
+  "errorGuardar": "Error al guardar: {error}",
 
   "msgCamposObligatorios": "Por favor completa todos los campos obligatorios",
   "msgDuracionEntero": "Duración de riego debe ser un número entero",
@@ -27,6 +33,8 @@
   "labelInicioRiego": "Inicio riego: {hora}",
   "labelDuracionRiego": "Duración de riego",
   "botonGuardar": "Guardar",
+  "msgEliminarCultivo": "¿Estás seguro de que quieres eliminar el cultivo \"{nombre}\"? Esto eliminará también sus programaciones de riego asociadas.",
+  "msgCultivoEliminado": "Cultivo eliminado correctamente",
 
   "listadoRiegos": "Listado de Riegos por cultivo",
   "errorGenerico": "Error: {error}",
@@ -58,6 +66,7 @@
   "noRiegos": "No hay riegos programados",
 
   "settings_title": "Ajustes",
+  "settings_language": "Idioma",
   "settings_light_mode": "Modo claro",
   "settings_user_data": "Datos del Usuario",
   "settings_farm_data": "Datos de la Finca",
@@ -100,6 +109,10 @@
   "humidity": "Humedad",
   "temperature": "Temperatura",
   "ph": "pH",
+  "msgBombaEncendida": "Bomba encendida",
+  "msgBombaApagada": "Bomba apagada",
+  "labelApagarBomba": "Apagar bomba",
+  "labelEncenderBomba": "Encender bomba",
 
   "loginTitle": "Inicio de sesión",
   "emailLabel": "Correo electrónico",
@@ -160,7 +173,7 @@
 
   "resetPasswordTitlePas": "Restablecer contraseña",
   "passwordLabelPas": "Contraseña",
-  "confirmPasswordLabelPas": "Confirmación contraseña",
+  "confirmPasswordLabelPas": "Token",
   "passwordEmptyError": "Por favor ingresa tu contraseña",
   "passwordTooShortError": "Mínimo 6 caracteres",
   "confirmPasswordEmptyError": "Por favor ingresa de nuevo tu contraseña",

@@ -157,4 +157,46 @@ class ApiService {
       );
     }
   }
+
+  // NUEVO MÉTODO: Eliminar un cultivo por ID
+  static Future<bool> eliminarCultivo(int id) async {
+    final response = await http.delete(
+      Uri.parse(
+        '$baseUrl/api/cultivos/$id/',
+      ), // Asumiendo endpoint DELETE /api/cultivos/{id}/
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 204 || response.statusCode == 200) {
+      return true; // Éxito
+    } else {
+      throw Exception(
+        'Error al eliminar cultivo: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
+  static Future<bool> getEstadoBomba() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/bomba/'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['is_on'] ?? false;
+    } else {
+      throw Exception('Error al obtener estado bomba: ${response.statusCode}');
+    }
+  }
+
+  // POST activar bomba
+  static Future<void> activarBomba(bool newState) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/bomba/'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'is_on': newState}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Error al activar bomba: ${response.statusCode}');
+    }
+  }
 }

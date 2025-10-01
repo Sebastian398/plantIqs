@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Sensor, ProgramacionRiego, RegistroRiego, LecturaSensor, Cultivo, Finca, PerfilUsuario
+from .models import Sensor, ProgramacionRiego, RegistroRiego, LecturaSensor, Cultivo, Finca, PerfilUsuario, BombaStatus
 from rest_framework.reverse import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -156,9 +156,18 @@ class FincaSerializer(serializers.ModelSerializer):
 
 class UserDetailSerializer1(serializers.ModelSerializer):
     telefono = serializers.CharField(source='perfilusuario.telefono', allow_blank=True, required=False)
+    avatar_url = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'telefono']        
+        fields = ['first_name', 'last_name', 'email', 'telefono', 'avatar_url']
+        
+    def get_avatar_url(self, obj):
+        if hasattr(obj, 'perfilusuario') and obj.perfilusuario.avatar_url:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.perfilusuario.avatar_url)
+            return obj.perfilusuario.avatar_url
+        return None  # O una URL default si quieres, ej: '/static/default-avatar.png'
 
     def update(self, instance, validated_data):
         perfil_data = validated_data.pop('perfilusuario', {})
@@ -173,7 +182,7 @@ class UserDetailSerializer1(serializers.ModelSerializer):
         if telefono is not None:
             perfil.telefono = telefono
             perfil.save()
-
+        
         return instance
 
 class PasswordResetSerializer(serializers.Serializer):
@@ -219,3 +228,35 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Las contraseñas no coinciden.")
         return attrs
+    
+class AvatarSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(required=True)
+
+    class Meta:
+        model = User
+        fields = ['avatar']
+
+    def update(self, instance, validated_data):
+        avatar = validated_data.get('avatar')
+        if avatar:
+            instance.avatar = avatar
+            instance.save()
+        return instance    
+
+class PerfilUsuarioSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PerfilUsuario
+        fields = ['avatar_url', 'telefono']
+
+    def get_avatar_url(self, obj):
+        # CORREGIDO: Usar avatar_url en lugar de avatar
+        if obj.avatar_url:
+            return obj.avatar_url
+        return None
+
+class BombaStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BombaStatus
+        fields = ['id', 'is_on', 'last_updated']

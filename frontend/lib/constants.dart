@@ -1,4 +1,4 @@
-const String baseUrl = "http://127.0.0.1:8000";
+const String baseUrl = "https://plantiq-07xw.onrender.com";
 const String registerEndpoint = "$baseUrl/api/register/";
 const String loginEndpoint = "$baseUrl/api/login/";
 const String tokenEndpoint = "$baseUrl/api/token/";

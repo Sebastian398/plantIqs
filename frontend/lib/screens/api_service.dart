@@ -62,7 +62,9 @@ class ApiService {
     String newPassword,
     String token,
   ) async {
-    final url = Uri.parse('http://localhost:8000/api/password_reset/');
+    final url = Uri.parse(
+      'https://plantiq-07xw.onrender.com/api/password_reset/',
+    );
     final response = await http.post(
       url,
       headers: {

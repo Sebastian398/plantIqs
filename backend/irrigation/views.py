@@ -6,19 +6,24 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Sensor, ProgramacionRiego, ActivacionUsuario, RegistroRiego, LecturaSensor, Cultivo, Finca
+from .models import (Sensor, ProgramacionRiego, ActivacionUsuario, 
+                     RegistroRiego, LecturaSensor, Cultivo, Finca, 
+                     BombaStatus, PerfilUsuario)
+
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.urls import reverse
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now, timedelta
 from django.db.models import Avg, Min, Max
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.hashers import make_password
+from django.core.files.storage import default_storage
+from rest_framework.parsers import MultiPartParser, FormParser
+from .utils import upload_image_to_github
+import tempfile
+import os
+from rest_framework.decorators import api_view
 from .serializers import (
     SensorSerializer,
     ProgramacionRiegoSerializer,
@@ -32,8 +37,8 @@ from .serializers import (
     CultivoSerializer,
     FincaSerializer,
     PasswordResetSerializer,
+    BombaStatusSerializer,
 )
-
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -44,51 +49,36 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-
-            # Crear token de activación
             token_obj = ActivacionUsuario.objects.create(user=user)
-
-            # Construir URL absoluto para activar cuenta
             url_activacion = request.build_absolute_uri(
                 reverse('activar-cuenta', kwargs={'token': str(token_obj.token)})
             )
-
-            # Enviar email de activación
             asunto = 'Activa tu cuenta'
-            mensaje = f'Hola {user.first_name}, gracias por registrarte. Por favor activa tu cuenta haciendo click en el siguiente enlace: {url_activacion}'
-            send_mail(
-                asunto,
-                mensaje,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-
-            return Response(
-                {"mensaje": "Registro exitoso. Revisa tu email para activar la cuenta."},
-                status=status.HTTP_201_CREATED
-            )
-        else:
-            return Response(
-                {"error": "Error en el registro", "detalles": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            contexto = {
+                'nombre': user.first_name,
+                'url_activacion': url_activacion,
+            }
+            texto = render_to_string('email/activar_cuenta.txt', contexto)
+            html = render_to_string('email/activar_cuenta.html', contexto)
+            msg = EmailMultiAlternatives(asunto, texto, settings.DEFAULT_FROM_EMAIL, [user.email])
+            msg.attach_alternative(html, "text/html")
+            msg.send(fail_silently=False)
+            return Response({"mensaje": "Registro exitoso. Revisa tu email para activar la cuenta."},
+                            status=status.HTTP_201_CREATED)
+        return Response({"error": "Error en el registro", "detalles": serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 class ActivarCuentaView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request, token):
         token_obj = get_object_or_404(ActivacionUsuario, token=token)
-        
         if token_obj.esta_expirado():
             return Response({'error': 'El enlace de activación expiró.'}, status=status.HTTP_400_BAD_REQUEST)
-
         user = token_obj.user
         user.is_active = True
         user.save()
-
         token_obj.delete()
-
         return Response({'mensaje': 'Cuenta activada exitosamente.'}, status=status.HTTP_200_OK)
 
 class CustomLoginView(TokenObtainPairView):
@@ -100,54 +90,20 @@ class CustomLoginView(TokenObtainPairView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as exc:
-            return Response({
-                "error": "Credenciales inválidas",
-                "detalles": exc.detail
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": "Credenciales inválidas", "detalles": exc.detail},
+                            status=status.HTTP_401_UNAUTHORIZED)
 
         data = serializer.validated_data
         email = request.data.get('email', '')
-        
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            user = None
-             
-        if user:
-            token_generator = PasswordResetTokenGenerator()
-            token = token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            print(f"DEBUG -> Token: {token}, UID: {uid}")
-
-
-            context = {
-            'username': user.first_name,
-            'token': token,
-            'uid': uid,
-}
-
-
-            subject = 'Token para restablecer tu contraseña'
-            from_email = settings.DEFAULT_FROM_EMAIL
-            to_email = user.email
-
-
-            text_content = render_to_string('email/user_reset_password.txt', context)
-            html_content = render_to_string('email/user_reset_password.html', context)
-
-            msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            password_reset_url = request.build_absolute_uri('/api/password_reset/')
-            
+        # Retornar token JWT
+        password_reset_url = request.build_absolute_uri('/api/password_reset/')
         return Response({
             "mensaje": f"¡Bienvenido, {email}!",
             "access": data.get("access"),
             "refresh": data.get("refresh"),
             "password_reset_url": password_reset_url,
         })
-
 
 class AccesoValidateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -206,7 +162,6 @@ class ProgramacionRiegoViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def activar_riego(self, request, pk=None):
         programacion = self.get_object()
-        # Aquí podrías agregar la lógica real para activar el riego mediante hardware
 
         return Response({'mensaje': f'Riego activado por {programacion.duracion} minutos'})
 
@@ -276,12 +231,18 @@ class InfoFincaView(APIView):
             return Response({'error': 'No hay datos de la finca registrados.'}, status=404)
         serializer = FincaSerializer(finca)
         return Response(serializer.data)
+    def post(self, request):
+        serializer = FincaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserDetailView1(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request):
-        serializer = UserDetailSerializer1(request.user)
+        # Pasar request al serializer para que get_avatar_url funcione
+        serializer = UserDetailSerializer1(request.user, context={'request': request})
         return Response(serializer.data)
     
 class InfoFincaEditarView(generics.RetrieveUpdateAPIView):
@@ -305,86 +266,54 @@ class UserUpdateView(generics.RetrieveUpdateAPIView):
         return self.request.user
     
 class CustomPasswordResetView(APIView):
-    """Vista personalizada para solicitar reset de contraseña - Con tokens personalizados en BD"""
-    permission_classes = [AllowAny]
-    
+    permission_classes = (permissions.AllowAny,)
+
     def post(self, request):
         from .models import TokenRestablecimiento
-        
         serializer = PasswordResetSerializer(data=request.data)
+
         if serializer.is_valid():
             email = serializer.validated_data['email']
-            
             try:
                 user = User.objects.get(email=email)
-                
-                # Crear token personalizado y guardarlo en BD
-                print(f"DEBUG -> Creando token para usuario: {user.email}")
                 token_obj = TokenRestablecimiento.create_for_user(user)
                 token = token_obj.token
-                
-                # Verificar que el token se creó correctamente
-                print(f"DEBUG RESET -> Token creado: {token}")
-                print(f"DEBUG RESET -> Token ID en BD: {token_obj.id}")
-                print(f"DEBUG RESET -> Token válido: {token_obj.is_valid()}")
-                
-                # Preparar contexto para el template
                 context = {
                     'username': user.first_name or user.username,
-                    'first_name': user.first_name or user.username,
                     'email': user.email,
                     'token': token,
                     'uid': str(user.pk),
-                    'reset_password_token': token,
                     'site_name': 'PlantIQ - Sistema de Riego',
                 }
-                
-                # Verificar contexto antes de enviar
-                print(f"DEBUG CONTEXT -> Contexto completo: {context}")
-                print(f"DEBUG CONTEXT -> Token en contexto: '{context.get('token')}'")
-                print(f"DEBUG CONTEXT -> UID en contexto: '{context.get('uid')}'")
-                
-                # Enviar email exactamente como en login
                 subject = 'Restablecimiento de Contraseña - PlantIQ'
                 from_email = settings.DEFAULT_FROM_EMAIL
                 to_email = user.email
-                
-                try:
-                    # Renderizar plantillas
-                    text_content = render_to_string('email/user_reset_password.txt', context)
-                    html_content = render_to_string('email/user_reset_password.html', context)
-                    
-                    # Enviar email
-                    msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
-                    msg.attach_alternative(html_content, "text/html")
-                    msg.send()
-                    
-                    print(f"Email de reset enviado exitosamente a {email}")
-                    
-                except Exception as e:
-                    print(f"Error enviando email: {str(e)}")
-                    return Response({
-                        "error": f"Error enviando email: {str(e)}"
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
-                # URL para confirmar el reset
+
+                text_content = render_to_string('email/user_reset_password.txt', context)
+                html_content = render_to_string('email/user_reset_password.html', context)
+                msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+                msg.attach_alternative(html_content, "text/html")
+                msg.send(fail_silently=False)
+
                 password_reset_confirm_url = request.build_absolute_uri('/api/password_reset/confirm')
-                
+
                 return Response({
                     "mensaje": f"Se ha enviado un email de restablecimiento a {email}. Revisa tu bandeja de entrada.",
                     "email": email,
-                    "token_debug": token,  # Token personalizado guardado en BD
-                    "uid_debug": str(user.pk),  # ID del usuario
-                    "token_id": token_obj.id,  # ID del token en BD para referencia
-                    "expira": token_obj.expira.isoformat(),  # Fecha de expiración
-                    "password_reset_confirm_url": password_reset_confirm_url
+                    "token_debug": token,
+                    "uid_debug": str(user.pk),
+                    "token_id": token_obj.id,
+                    "expira": token_obj.expira.isoformat(),
+                    "password_reset_confirm_url": password_reset_confirm_url,
                 }, status=status.HTTP_200_OK)
-                
+
             except User.DoesNotExist:
-                return Response({
-                    "error": "No existe un usuario con ese email."
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response({"error": "No existe un usuario con ese email."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error": f"Error enviando email: {str(e)}"},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomPasswordResetConfirmView(APIView):
@@ -452,3 +381,136 @@ class CustomPasswordResetConfirmView(APIView):
             'mensaje': 'Contraseña restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.',
             'email': user.email
         }, status=status.HTTP_200_OK)
+    
+class UpdateAvatarView(APIView):
+    parser_classes = [MultiPartParser]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            perfil = request.user.perfilusuario
+        except:
+            from .models import PerfilUsuario
+            perfil = PerfilUsuario.objects.create(user=request.user)
+            
+        file_obj = request.FILES.get('avatar')
+        if not file_obj:
+            return Response({'detail':'No se envió imagen'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Obtener la URL anterior para eliminarla
+        old_avatar_url = perfil.avatar_url if perfil.avatar_url else None
+        
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            for chunk in file_obj.chunks():
+                tmp.write(chunk)
+            tmp.flush()
+            tmp_path = tmp.name
+            
+            try:
+                # CORREGIDO: Pasar user_id y URL anterior
+                new_url = upload_image_to_github(tmp_path, request.user.id, old_avatar_url)
+                
+                # Guardar nueva URL
+                perfil.avatar_url = new_url
+                perfil.save()
+                
+                print(f"DEBUG AVATAR -> Usuario: {request.user.id}")
+                print(f"DEBUG AVATAR -> URL anterior: {old_avatar_url}")
+                print(f"DEBUG AVATAR -> Nueva URL: {new_url}")
+                
+                return Response({
+                    'message': 'Avatar actualizado correctamente',
+                    'avatar_url': new_url,
+                    'success': True,
+                    'old_url': old_avatar_url  # Para debug
+                }, status=status.HTTP_200_OK)
+                
+            except Exception as e:
+                print(f"ERROR SUBIENDO AVATAR: {str(e)}")
+                return Response({'detail': f'Error al subir la foto: {str(e)}'}, status=500)
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+@api_view(['GET', 'POST'])
+def receive_lectura_sensor(request):
+    cultivo_id = request.data.get('cultivo_id', 1)
+    try:
+        cultivo = Cultivo.objects.get(id=cultivo_id)
+    except Cultivo.DoesNotExist:
+        return Response({"error": "Cultivo no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Hardcodea sensor_id para humedad (crea Sensor tipo='HUMEDAD' en Admin si no existe, ID=1)
+    sensor_id = 1  # Ajusta al ID real de tu Sensor de humedad
+    try:
+        sensor = Sensor.objects.get(id=sensor_id, tipo=Sensor.HUMEDAD)  # Asume modelo Sensor tiene 'tipo'
+    except Sensor.DoesNotExist:
+        return Response({"error": "Sensor de humedad no encontrado (crea en Admin)"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Data para serializer: Mapea 'tipo_sensor' a 'sensor' (requerido)
+    serializer_data = {
+        'sensor': sensor.id,  # ¡CLAVE: Proporciona ID del sensor
+        'cultivo': cultivo.id,
+        'valor': request.data.get('valor', 0)
+    }
+    
+    print(f"DEBUG: POST humedad - Body: {request.data}, Serializer data: {serializer_data}")
+
+    serializer = LecturaSensorSerializer(data=serializer_data)
+    if serializer.is_valid():
+        serializer.save()
+        print(f"DEBUG: Creada LecturaSensor ID: {serializer.data['id']}")
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        print(f"DEBUG: Error serializer: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Estado de la bomba (GET /api/bomba/)
+@api_view(['GET', 'POST']) 
+def bomba_handler(request):
+    # Obtener o crear el registro de bomba (global, id=1)
+    bomba_status, created = BombaStatus.objects.get_or_create(id=1)
+    
+    if request.method == 'GET':
+        # Obtener estado actual
+        serializer = BombaStatusSerializer(bomba_status)
+        return Response(serializer.data)  # Retorna {'is_on': true/false, 'last_updated': ...}
+    
+    elif request.method == 'POST':
+        # Toggle o actualizar estado
+        new_state = request.data.get('is_on', not bomba_status.is_on)  # Toggle si no se envía
+        serializer = BombaStatusSerializer(bomba_status, data={'is_on': new_state})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Si llega aquí (método no permitido), DRF maneja automáticamente 405
+    return Response({'error': 'Método no permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+class UpdateAvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]  # <-- Esta línea es clave
+
+    def post(self, request):
+        user = request.user
+        if 'image' not in request.FILES:
+            return Response({'error': 'Debe proporcionar una imagen (campo "image")'}, status=status.HTTP_400_BAD_REQUEST)
+        image = request.FILES['image']
+
+        if not image.content_type.startswith('image/'):
+            return Response({'error': 'El archivo debe ser una imagen'}, status=status.HTTP_400_BAD_REQUEST)
+        if image.size > 5 * 1024 * 1024:
+            return Response({'error': 'La imagen no puede exceder 5MB'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            perfil, created = PerfilUsuario.objects.get_or_create(user=user)
+            perfil.avatar = image
+            perfil.save()
+            avatar_url = request.build_absolute_uri(perfil.avatar.url)
+            return Response({
+                'mensaje': 'Avatar actualizado exitosamente',
+                'avatar_url': avatar_url
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': f'Error al guardar la imagen: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

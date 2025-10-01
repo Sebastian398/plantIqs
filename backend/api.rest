@@ -1,5 +1,5 @@
-PUT  http://127.0.0.1:8000/api/usuario-actual/editar/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4NTAxNDQ2LCJpYXQiOjE3NTg0OTc4NDYsImp0aSI6IjUwMzZkMGUzNTY5MjRhZGM4MmEwNzZhYTQ2ZjVmNGIwIiwidXNlcl9pZCI6IjEifQ.IsFKE4tfUh-S6NEy7kPS5r1ah7dKDnZ6jmpn-bGpVEc 
+GET https://plantiq-07xw.onrender.com/api/usuario-actual1/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5MTk1ODE0LCJpYXQiOjE3NTkxOTIyMTUsImp0aSI6ImIxMjZlODRkYzIwZjQzZTFhYTk5YTI4NDRhNmRhYWVjIiwidXNlcl9pZCI6IjIifQ.QXQ1-PZgRxKF53puy91JS2jxzt-pSEaf6gtn4k8xTuQ 
 content-Type:application/json
 
 {
